@@ -1,5 +1,8 @@
 use libc::{uint8_t, uint16_t, int32_t, uint32_t, c_void, c_char, c_uchar};
+use std::mem::{transmute, zeroed};
 use std::option::Option;
+use std::clone::Clone;
+use std::default::Default;
 
 pub enum StructDNSServiceRef {}
 pub type DNSServiceRef = *mut StructDNSServiceRef;
@@ -14,19 +17,19 @@ pub struct UnionTXTRecordRef {
 }
 impl UnionTXTRecordRef {
     pub unsafe fn PrivateData(&mut self) -> *mut [::libc::c_char; 16usize] {
-        let raw: *mut u8 = ::std::mem::transmute(&self._bindgen_data_);
-        ::std::mem::transmute(raw.offset(0))
+        let raw: *mut u8 = transmute(&self._bindgen_data_);
+        transmute(raw.offset(0))
     }
     pub unsafe fn ForceNaturalAlignment(&mut self) -> *mut *mut ::libc::c_char {
-        let raw: *mut u8 = ::std::mem::transmute(&self._bindgen_data_);
-        ::std::mem::transmute(raw.offset(0))
+        let raw: *mut u8 = transmute(&self._bindgen_data_);
+        transmute(raw.offset(0))
     }
 }
-impl ::std::clone::Clone for UnionTXTRecordRef {
+impl Clone for UnionTXTRecordRef {
     fn clone(&self) -> Self { *self }
 }
-impl ::std::default::Default for UnionTXTRecordRef {
-    fn default() -> Self { unsafe { ::std::mem::zeroed() } }
+impl Default for UnionTXTRecordRef {
+    fn default() -> Self { unsafe { zeroed() } }
 }
 pub type TXTRecordRef = UnionTXTRecordRef;
 
@@ -39,7 +42,7 @@ pub enum DNSServiceFlags {
     Shared             = 0x10,
     Unique             = 0x20,
     BrowseDomains      = 0x40,
-    ReistrationDomains = 0x80,
+    RegistrationDomains = 0x80,
     LongLivedQuery     = 0x100,
     AllowRemoteQuery   = 0x200,
     ForceMulticast     = 0x400,
@@ -199,132 +202,132 @@ extern {
     pub fn DNSServiceRefDeallocate (sdRef : DNSServiceRef);
 
     pub fn DNSServiceEnumerateDomains (sdRef          : *mut DNSServiceRef,
-                                   flags          : DNSServiceFlags,
-                                   interfaceIndex : uint32_t,
-                                   callBack       : DNSServiceDomainEnumReply,
-                                   context        : *mut c_void) -> DNSServiceErrorType;
+                                       flags          : DNSServiceFlags,
+                                       interfaceIndex : uint32_t,
+                                       callBack       : DNSServiceDomainEnumReply,
+                                       context        : *mut c_void) -> DNSServiceErrorType;
 
     pub fn DNSServiceRegister (sdRef          : *mut DNSServiceRef,
-                           flags          : DNSServiceFlags,
-                           interfaceIndex : uint32_t,
-                           name           : *const c_char,
-                           regtype        : *const c_char,
-                           domain         : *const c_char,
-                           host           : *const c_char,
-                           port           : uint16_t,
-                           txtLen         : uint16_t,
-                           txtRecord      : *const c_void,
-                           callback       : DNSServiceRegisterReply,
-                           context        : *mut c_void) -> DNSServiceErrorType;
+                               flags          : DNSServiceFlags,
+                               interfaceIndex : uint32_t,
+                               name           : *const c_char,
+                               regtype        : *const c_char,
+                               domain         : *const c_char,
+                               host           : *const c_char,
+                               port           : uint16_t,
+                               txtLen         : uint16_t,
+                               txtRecord      : *const c_void,
+                               callback       : DNSServiceRegisterReply,
+                               context        : *mut c_void) -> DNSServiceErrorType;
 
     pub fn DNSServiceAddRecord (sdRef     : DNSServiceRef,
-                            RecordRef : *mut DNSRecordRef,
-                            flags     : DNSServiceFlags,
-                            rrtype    : uint16_t,
-                            rdlen     : uint16_t,
-                            rdata     : *const c_void,
-                            ttl       : uint32_t) -> DNSServiceErrorType;
+                                RecordRef : *mut DNSRecordRef,
+                                flags     : DNSServiceFlags,
+                                rrtype    : uint16_t,
+                                rdlen     : uint16_t,
+                                rdata     : *const c_void,
+                                ttl       : uint32_t) -> DNSServiceErrorType;
 
     pub fn DNSServiceUpdateRecord (sdRef     : DNSServiceRef,
-                               RecordRef : *mut DNSRecordRef,
-                               flags     : DNSServiceFlags,
-                               rdlen     : uint16_t,
-                               rdata     : *const c_void,
-                               ttl       : uint32_t) -> DNSServiceErrorType;
+                                   RecordRef : *mut DNSRecordRef,
+                                   flags     : DNSServiceFlags,
+                                   rdlen     : uint16_t,
+                                   rdata     : *const c_void,
+                                   ttl       : uint32_t) -> DNSServiceErrorType;
 
     pub fn DNSServiceRemoveRecord (sdRef     : DNSServiceRef,
-                               RecordRef : *mut DNSRecordRef,
-                               flags     : DNSServiceFlags) -> DNSServiceErrorType;
+                                   RecordRef : *mut DNSRecordRef,
+                                   flags     : DNSServiceFlags) -> DNSServiceErrorType;
 
     pub fn DNSServiceBrowse (sdRef          : *mut DNSServiceRef,
-                         flags          : DNSServiceFlags,
-                         interfaceIndex : uint32_t,
-                         regtype        : *const c_char,
-                         domain         : *const c_char,
-                         callback       : DNSServiceBrowseReply,
-                         context        : *mut c_void) -> DNSServiceErrorType;
+                             flags          : DNSServiceFlags,
+                             interfaceIndex : uint32_t,
+                             regtype        : *const c_char,
+                             domain         : *const c_char,
+                             callback       : DNSServiceBrowseReply,
+                             context        : *mut c_void) -> DNSServiceErrorType;
 
     pub fn DNSServiceResolve (sdRef          : *mut DNSServiceRef,
-                          flags          : DNSServiceFlags,
-                          interfaceIndex : uint32_t,
-                          name           : *const c_char,
-                          regtype        : *const c_char,
-                          domain         : *const c_char,
-                          callback       : DNSServiceResolveReply,
-                          context        : *mut c_void) -> DNSServiceErrorType;
+                              flags          : DNSServiceFlags,
+                              interfaceIndex : uint32_t,
+                              name           : *const c_char,
+                              regtype        : *const c_char,
+                              domain         : *const c_char,
+                              callback       : DNSServiceResolveReply,
+                              context        : *mut c_void) -> DNSServiceErrorType;
 
     pub fn DNSServiceCreateConnection (sdRef : *mut DNSServiceRef) -> DNSServiceErrorType;
 
     pub fn DNSServiceRegisterRecord (sdRef          : DNSServiceRef,
-                                 RecordRef      : *mut DNSRecordRef,
-                                 flags          : DNSServiceFlags,
-                                 interfaceIndex : uint32_t,
-                                 fullname       : *const c_char,
-                                 rrtype         :  uint16_t,
-                                 rrclass        : uint16_t,
-                                 rdlen          : uint16_t,
-                                 rdata          : *const c_void,
-                                 ttl            : uint32_t,
-                                 callBack       : DNSServiceRegisterRecordReply,
-                                 context        : *mut c_void) -> DNSServiceErrorType;
+                                     RecordRef      : *mut DNSRecordRef,
+                                     flags          : DNSServiceFlags,
+                                     interfaceIndex : uint32_t,
+                                     fullname       : *const c_char,
+                                     rrtype         :  uint16_t,
+                                     rrclass        : uint16_t,
+                                     rdlen          : uint16_t,
+                                     rdata          : *const c_void,
+                                     ttl            : uint32_t,
+                                     callBack       : DNSServiceRegisterRecordReply,
+                                     context        : *mut c_void) -> DNSServiceErrorType;
 
     pub fn DNSServiceQueryRecord (sdRef          : *mut DNSServiceRef,
-                              flags          : DNSServiceFlags,
-                              interfaceIndex : uint32_t,
-                              fullname       : *const c_char,
-                              rrtype         :  uint16_t,
-                              rrclass        : uint16_t,
-                              callBack       : DNSServiceQueryRecordReply,
-                              context        : *mut c_void) -> DNSServiceErrorType;
-
-    pub fn DNSServiceReconfirmRecord (flags          : DNSServiceFlags,
+                                  flags          : DNSServiceFlags,
                                   interfaceIndex : uint32_t,
                                   fullname       : *const c_char,
                                   rrtype         :  uint16_t,
                                   rrclass        : uint16_t,
-                                  rdlen          : uint16_t,
-                                  rdata          : *const c_void) -> DNSServiceErrorType;
+                                  callBack       : DNSServiceQueryRecordReply,
+                                  context        : *mut c_void) -> DNSServiceErrorType;
+
+    pub fn DNSServiceReconfirmRecord (flags          : DNSServiceFlags,
+                                      interfaceIndex : uint32_t,
+                                      fullname       : *const c_char,
+                                      rrtype         :  uint16_t,
+                                      rrclass        : uint16_t,
+                                      rdlen          : uint16_t,
+                                      rdata          : *const c_void) -> DNSServiceErrorType;
 
     pub fn DNSServiceConstructFullName (fullname : *mut c_char,
-                                    service  : *const c_char,
-                                    regtype  : *const c_char,
-                                    domain   : *const c_char) -> int32_t;
+                                        service  : *const c_char,
+                                        regtype  : *const c_char,
+                                        domain   : *const c_char) -> int32_t;
 
     pub fn TXTRecordCreate (txtRecord : *mut TXTRecordRef,
-                        bufferLen : uint16_t,
-                        buffer    : *mut c_void);
+                            bufferLen : uint16_t,
+                            buffer    : *mut c_void);
 
     pub fn TXTRecordDeallocate (txtRecord : *mut TXTRecordRef);
 
     pub fn TXTRecordSetValue (txtRecord : *mut TXTRecordRef,
-                          key       : *const c_char,
-                          valueSize : uint8_t,
-                          value     : *const c_void) -> DNSServiceErrorType;
+                              key       : *const c_char,
+                              valueSize : uint8_t,
+                              value     : *const c_void) -> DNSServiceErrorType;
 
     pub fn TXTRecordRemoveValue (txtRecord : *mut TXTRecordRef,
-                             key       : *const c_char) -> DNSServiceErrorType;
+                                 key       : *const c_char) -> DNSServiceErrorType;
 
     pub fn TXTRecordGetLength (txtRecord : *const TXTRecordRef) -> uint16_t;
 
     pub fn TXTRecordGetBytesPtr (txtRecord : *const TXTRecordRef) -> *const c_void;
 
     pub fn TXTRecordContainsKey (txtLen    : uint16_t,
-                             txtRecord : *const c_void,
-                             key       : *const c_char) -> int32_t;
+                                 txtRecord : *const c_void,
+                                 key       : *const c_char) -> int32_t;
 
     pub fn TXTRecordGetValuePtr (txtLen    : uint16_t,
-                             txtRecord : *const c_void,
-                             key       : *const c_char,
-                             valueLen  : uint8_t) -> *const c_void;
+                                 txtRecord : *const c_void,
+                                 key       : *const c_char,
+                                 valueLen  : uint8_t) -> *const c_void;
 
     pub fn TXTRecordGetCount (txtLen    : uint16_t,
-                          txtRecord : *const c_void,) -> uint16_t;
+                              txtRecord : *const c_void,) -> uint16_t;
 
     pub fn TXTRecordGetItemAtIndex (txtLen    : uint16_t,
-                                txtRecord : *const c_void,
-                                index     : uint16_t,
-                                keyBufLen : uint16_t,
-                                key       : *mut c_char,
-                                valueLen  : uint8_t,
-                                value     : *const (*const c_void)) -> DNSServiceErrorType;
+                                    txtRecord : *const c_void,
+                                    index     : uint16_t,
+                                    keyBufLen : uint16_t,
+                                    key       : *mut c_char,
+                                    valueLen  : uint8_t,
+                                    value     : *const (*const c_void)) -> DNSServiceErrorType;
 }

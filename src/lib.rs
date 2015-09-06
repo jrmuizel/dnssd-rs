@@ -1,9 +1,7 @@
 extern crate libc;
 
 mod ffi;
-
-use ffi::*;
-
-pub struct DNSService {
-    ptr : *mut ffi::DNSServiceRef,
-}
+pub mod error;
+pub mod callback;
+pub mod context;
+pub mod service;
