@@ -1,7 +1,7 @@
 extern crate libc;
 
 mod ffi;
-pub mod error;
-pub mod callback;
-pub mod context;
+mod utils;
+pub mod record;
 pub mod service;
+pub mod callback;

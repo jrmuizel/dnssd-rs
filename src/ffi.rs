@@ -132,13 +132,13 @@ pub enum DNSServiceErrorType {
     BadTime             = -65559,
 }
 
-pub const K_DNS_SERVICE_MAX_SERVICE_NAME : usize = 64;
+pub const DNS_SERVICE_MAX_SERVICE_NAME : usize = 64;
 
-pub const K_DNS_SERVICE_MAX_DOMAIN_NAME : usize = 1005;
+pub const DNS_SERVICE_MAX_DOMAIN_NAME : usize = 1005;
 
-pub const K_DNS_SERVICE_INTERFACE_INDEX_ANY : usize = 0;
+pub const DNS_SERVICE_INTERFACE_INDEX_ANY : usize = 0;
 
-pub const K_DNS_SERVICE_INTERFACE_INDEX_LOCAL_ONLY : u32 = ::std::u32::MAX -1;
+pub const DNS_SERVICE_INTERFACE_INDEX_LOCAL_ONLY : u32 = ::std::u32::MAX -1;
 
 pub type DNSServiceDomainEnumReply = Option<extern fn (DNSServiceRef,
                                                        DNSServiceFlags,
@@ -229,7 +229,7 @@ extern {
                                 ttl       : uint32_t) -> DNSServiceErrorType;
 
     pub fn DNSServiceUpdateRecord (sdRef     : DNSServiceRef,
-                                   RecordRef : *mut DNSRecordRef,
+                                   RecordRef : DNSRecordRef,
                                    flags     : DNSServiceFlags,
                                    rdlen     : uint16_t,
                                    rdata     : *const c_void,
