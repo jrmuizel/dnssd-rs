@@ -15,6 +15,7 @@ pub type DNSRecordRef = *mut StructDNSRecordRef;
 pub struct UnionTXTRecordRef {
     pub _bindgen_data_ : [u64; 2usize],
 }
+
 impl UnionTXTRecordRef {
     pub unsafe fn PrivateData(&mut self) -> *mut [::libc::c_char; 16usize] {
         let raw: *mut u8 = transmute(&self._bindgen_data_);
@@ -25,12 +26,15 @@ impl UnionTXTRecordRef {
         transmute(raw.offset(0))
     }
 }
+
 impl Clone for UnionTXTRecordRef {
     fn clone(&self) -> Self { *self }
 }
+
 impl Default for UnionTXTRecordRef {
     fn default() -> Self { unsafe { zeroed() } }
 }
+
 pub type TXTRecordRef = UnionTXTRecordRef;
 
 #[repr(C)]

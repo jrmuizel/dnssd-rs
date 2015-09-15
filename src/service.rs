@@ -32,16 +32,16 @@ impl DNSService {
         unsafe { DNSServiceProcessResult (self.ptr) }
     }
 
-    pub fn enumerate_domains (&mut self,
-                              flags           : DNSServiceFlags,
-                              interface_index : u32,
-                              callback_struct : Option<SafeDomainEnumReply>) -> DNSServiceErrorType {
+    pub fn enumerate_domains <T> (&mut self,
+                                  flags           : DNSServiceFlags,
+                                  interface_index : u32,
+                                  callback_struct : Option<SafeDomainEnumReply<T>>) -> DNSServiceErrorType {
         let context = &callback_struct as *const _ as *mut c_void;
 
-        unsafe { DNSServiceEnumerateDomains (&mut self.ptr, flags, interface_index, Some(SafeDomainEnumReply::wrapper), context) }
+        unsafe { DNSServiceEnumerateDomains (&mut self.ptr, flags, interface_index, Some(SafeDomainEnumReply::<T>::wrapper), context) }
     }
 
-    pub fn register (&mut self,
+    /*pub fn register (&mut self,
                      flags           : DNSServiceFlags,
                      interface_index : u32,
                      name            : &str,
@@ -49,7 +49,7 @@ impl DNSService {
                      domain          : &str,
                      port            : u16,
                      txtLen          : u16,
-                     )
+                     )*/
 
     pub fn add_record <T> (&self,
                            record       : &mut DNSRecord,

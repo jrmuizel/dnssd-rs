@@ -16,23 +16,25 @@ pub type SafeRegisterReplyCallback = Box<Fn(DNSService,
                                             &str,
                                             &str) + 'static>;
 
-pub struct SafeDomainEnumReply {
+pub struct SafeDomainEnumReply <T> {
     pub callback : SafeDomainEnumReplyCallback,
+    pub content : T,
 }
 
-pub struct SafeRegisterReply {
+pub struct SafeRegisterReply <T> {
     pub callback : SafeRegisterReplyCallback,
+    pub content : T,
 }
 
 
-impl SafeDomainEnumReply {
+impl <T> SafeDomainEnumReply <T> {
     pub extern fn wrapper (service_ref     : DNSServiceRef,
                            flags           : DNSServiceFlags,
                            interface_index : uint32_t,
                            error_code      : DNSServiceErrorType,
                            reply_domain    : *const c_char,
                            context         : *mut c_void) {
-        let context = context as *mut Option<SafeDomainEnumReply>;
+        let context = context as *mut Option<SafeDomainEnumReply<T>>;
         unsafe {
             match *context {
                 None => {},
@@ -47,7 +49,7 @@ impl SafeDomainEnumReply {
     }
 }
 
-impl SafeRegisterReply {
+impl <T> SafeRegisterReply <T> {
     pub extern fn wrapper (service_ref     : DNSServiceRef,
                            flags           : DNSServiceFlags,
                            error_code      : DNSServiceErrorType,
@@ -55,7 +57,7 @@ impl SafeRegisterReply {
                            regtype         : *const c_char,
                            domain          : *const c_char,
                            context         : *mut c_void) {
-        let context = context as *mut Option<SafeRegisterReply>;
+        let context = context as *mut Option<SafeRegisterReply<T>>;
         unsafe {
             match *context {
                 None => {},
