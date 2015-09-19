@@ -17,11 +17,13 @@ pub struct UnionTXTRecordRef {
 }
 
 impl UnionTXTRecordRef {
-    pub unsafe fn PrivateData(&mut self) -> *mut [::libc::c_char; 16usize] {
+    #[allow(dead_code)]
+    pub unsafe fn private_data(&mut self) -> *mut [::libc::c_char; 16usize] {
         let raw: *mut u8 = transmute(&self._bindgen_data_);
         transmute(raw.offset(0))
     }
-    pub unsafe fn ForceNaturalAlignment(&mut self) -> *mut *mut ::libc::c_char {
+    #[allow(dead_code)]
+    pub unsafe fn force_natural_alignment(&mut self) -> *mut *mut ::libc::c_char {
         let raw: *mut u8 = transmute(&self._bindgen_data_);
         transmute(raw.offset(0))
     }
@@ -37,6 +39,7 @@ impl Default for UnionTXTRecordRef {
 
 pub type TXTRecordRef = UnionTXTRecordRef;
 
+#[allow(dead_code)]
 #[repr(C)]
 pub enum DNSServiceFlags {
     MoreComing         = 0x1,
@@ -53,10 +56,12 @@ pub enum DNSServiceFlags {
     ReturnCNAME        = 0x800,
 }
 
+#[allow(dead_code)]
 pub enum DNSServiceClass {
     IN = 1,
 }
 
+#[allow(dead_code)]
 #[repr(C)]
 pub enum DNSServiceType {
     A        = 1,
@@ -109,6 +114,7 @@ pub enum DNSServiceType {
     ANY      = 255,
 }
 
+#[allow(dead_code)]
 #[repr(C)]
 pub enum DNSServiceErrorType {
     NoError             = 0,
@@ -136,12 +142,16 @@ pub enum DNSServiceErrorType {
     BadTime             = -65559,
 }
 
+#[allow(dead_code)]
 pub const DNS_SERVICE_MAX_SERVICE_NAME : usize = 64;
 
+#[allow(dead_code)]
 pub const DNS_SERVICE_MAX_DOMAIN_NAME : usize = 1005;
 
+#[allow(dead_code)]
 pub const DNS_SERVICE_INTERFACE_INDEX_ANY : usize = 0;
 
+#[allow(dead_code)]
 pub const DNS_SERVICE_INTERFACE_INDEX_LOCAL_ONLY : u32 = ::std::u32::MAX -1;
 
 pub type DNSServiceDomainEnumReply = Option<extern fn (DNSServiceRef,
@@ -322,7 +332,7 @@ extern {
     pub fn TXTRecordGetValuePtr (txtLen    : uint16_t,
                                  txtRecord : *const c_void,
                                  key       : *const c_char,
-                                 valueLen  : uint8_t) -> *const c_void;
+                                 valueLen  : *mut uint8_t) -> *const c_void;
 
     pub fn TXTRecordGetCount (txtLen    : uint16_t,
                               txtRecord : *const c_void,) -> uint16_t;
@@ -332,6 +342,6 @@ extern {
                                     index     : uint16_t,
                                     keyBufLen : uint16_t,
                                     key       : *mut c_char,
-                                    valueLen  : uint8_t,
+                                    valueLen  : *mut uint8_t,
                                     value     : *const (*const c_void)) -> DNSServiceErrorType;
 }

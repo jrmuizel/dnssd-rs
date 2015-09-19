@@ -1,7 +1,7 @@
-use utils::c_to_str;
+use utils::const_c_to_string;
 use service::DNSService;
 use ffi::{DNSServiceRef, DNSServiceFlags, DNSServiceErrorType};
-use libc::{uint16_t, c_void, c_char, uint32_t};
+use libc::{c_void, c_char, uint32_t};
 
 pub type SafeDomainEnumReplyCallback = Box<Fn(DNSService,
                                               DNSServiceFlags,
@@ -40,7 +40,7 @@ impl <T> SafeDomainEnumReply <T> {
                 None => {},
                 Some(ref callback_struct) => {
                     let safe_ref = DNSService { ptr: service_ref};
-                    let safe_reply_domain = unsafe { c_to_str (reply_domain) };
+                    let safe_reply_domain = const_c_to_string (reply_domain);
 
                     (callback_struct.callback) (safe_ref, flags, interface_index, error_code, &safe_reply_domain);
                 },
@@ -63,9 +63,9 @@ impl <T> SafeRegisterReply <T> {
                 None => {},
                 Some(ref callback_struct) => {
                     let safe_ref = DNSService { ptr: service_ref};
-                    let safe_name = unsafe { c_to_str (name) };
-                    let safe_regtype = unsafe { c_to_str (regtype) };
-                    let safe_domain = unsafe { c_to_str (domain) };
+                    let safe_name = const_c_to_string (name);
+                    let safe_regtype = const_c_to_string (regtype);
+                    let safe_domain = const_c_to_string (domain);
 
                     (callback_struct.callback) (safe_ref, flags, error_code, &safe_name, &safe_regtype, &safe_domain);
                 },
