@@ -1,5 +1,4 @@
-use std::ffi::{CStr, CString};
-use std::mem::transmute;
+use std::ffi::{CStr, CString}
 use libc::c_char;
 
 pub unsafe fn const_c_to_string (ptr : *const c_char) -> String {
@@ -11,14 +10,13 @@ pub unsafe fn str_to_const_c (value : &str) -> *const c_char {
     CString::new (new_string).unwrap ().as_ptr ()
 }
 
-pub unsafe fn str_to_mut_c (value : &str) -> *mut c_char {
-    let mut bytes = String::from (value).into_bytes ();
-    bytes.push (b"\0"[0]);
+pub unsafe fn mut_c_to_str (ptr : *mut c_char) -> String {
+    let mut result = Vec::<u8>::new();
 
-    let mut result = Vec::<i8>::with_capacity(bytes.len());
-    for &byte in bytes.iter () {
-        result.push (transmute (byte));
+    let i = 0;
+    while *ptr.offset (i) != (b"\0"[0] as c_char) {
+        result.push (*ptr.offset (i) as u8);
     }
 
-    result.as_mut_ptr()
+    String::from_utf8 (result).unwrap ()
 }

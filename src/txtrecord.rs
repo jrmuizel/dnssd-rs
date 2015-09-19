@@ -2,11 +2,11 @@ use ffi::{TXTRecordRef, TXTRecordCreate, TXTRecordDeallocate, TXTRecordSetValue,
     TXTRecordGetLength, TXTRecordGetBytesPtr, TXTRecordContainsKey, TXTRecordGetValuePtr,
     TXTRecordGetCount, TXTRecordGetItemAtIndex, DNSServiceErrorType};
 use std::mem::uninitialized;
-use libc::{uint8_t, c_void};
+use libc::{uint8_t, c_void, c_char, malloc, free};
 use std::cmp::min;
 use std::ops::Drop;
 use std::ptr::{null, null_mut};
-use utils::{str_to_const_c, str_to_mut_c};
+use utils::{str_to_const_c, mut_c_to_str};
 
 pub struct TXTRecord {
     pub ptr    : TXTRecordRef,
@@ -109,21 +109,23 @@ impl TXTRecord {
                                   key_buffer_len : Option<usize>) -> Result<TXTRecordItem<T>, DNSServiceErrorType> {
         unsafe {
             let keybuffer = match key_buffer_len {
-                None => String::with_capacity (256),
+                None => malloc (256),
                 Some (value) => {
                     let limit = min (value, 256);
-                    String::with_capacity (limit)
+                    malloc (limit as u64)
                 }
-            };
+            } as *mut c_char;
             let value_len : *mut uint8_t = uninitialized ();
             let value_ptr = uninitialized ();
 
-            match TXTRecordGetItemAtIndex (self.get_length (), self.get_bytes_ptr (), index, 256, str_to_mut_c (&keybuffer), value_len, value_ptr) {
+            match TXTRecordGetItemAtIndex (self.get_length (), self.get_bytes_ptr (), index, 256, keybuffer, value_len, value_ptr) {
                 DNSServiceErrorType::NoError => {
                     let value = & *(*(value_ptr) as *const T);
+                    let keyvalue = mut_c_to_str (keybuffer);
+                    free (keybuffer as *mut c_void);
 
                     Ok(TXTRecordItem {
-                        key : keybuffer,
+                        key : keyvalue,
                         value_len : *value_len,
                         value : value,
                     })
