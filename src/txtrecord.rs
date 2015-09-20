@@ -13,6 +13,11 @@ pub struct TXTRecord {
     pub buffer : Option<Vec<u8>>,
 }
 
+pub struct TXTRecordData {
+    pub ptr : *const c_void,
+    pub len : u16,
+}
+
 pub struct TXTRecordItem <'a, T: 'a> {
     pub key       : String,
     pub value_len : u8,
@@ -71,9 +76,18 @@ impl TXTRecord {
         unsafe { TXTRecordGetBytesPtr (&self.ptr) }
     }
 
+    pub fn get_data (&self) -> TXTRecordData {
+        TXTRecordData {
+            ptr : self.get_bytes_ptr (),
+            len : self.get_length (),
+        }
+    }
+}
+
+impl TXTRecordData {
     pub fn contains_key (&self,
                          key : &str) -> bool {
-        let result = unsafe { TXTRecordContainsKey (self.get_length (), self.get_bytes_ptr (), str_to_const_c (key)) };
+        let result = unsafe { TXTRecordContainsKey (self.len, self.ptr, str_to_const_c (key)) };
         match result {
             1 => true,
             _ => false,
@@ -84,7 +98,7 @@ impl TXTRecord {
                                   key : &'a str) ->  Option<TXTRecordItem<T>> {
         unsafe {
             let value_len : *mut uint8_t = uninitialized ();
-            let value = TXTRecordGetValuePtr (self.get_length (), self.get_bytes_ptr (), str_to_const_c (key), value_len);
+            let value = TXTRecordGetValuePtr (self.len, self.ptr, str_to_const_c (key), value_len);
 
             if value == null () {
                 None
@@ -101,7 +115,7 @@ impl TXTRecord {
     }
 
     pub fn get_count (&self) -> u16 {
-        unsafe { TXTRecordGetCount (self.get_length (), self.get_bytes_ptr ()) }
+        unsafe { TXTRecordGetCount (self.len, self.ptr) }
     }
 
     pub fn get_item_at_index <T> (&self,
@@ -118,7 +132,7 @@ impl TXTRecord {
             let value_len : *mut uint8_t = uninitialized ();
             let value_ptr = uninitialized ();
 
-            match TXTRecordGetItemAtIndex (self.get_length (), self.get_bytes_ptr (), index, 256, keybuffer, value_len, value_ptr) {
+            match TXTRecordGetItemAtIndex (self.len, self.ptr, index, 256, keybuffer, value_len, value_ptr) {
                 DNSServiceErrorType::NoError => {
                     let value = & *(*(value_ptr) as *const T);
                     let keyvalue = mut_c_to_str (keybuffer);

@@ -1,11 +1,12 @@
-use std::ffi::{CStr, CString}
+use std::ffi::{CStr, CString};
+use std::ptr::null;
 use libc::c_char;
 
 pub unsafe fn const_c_to_string (ptr : *const c_char) -> String {
     String::from_utf8 (CStr::from_ptr (ptr).to_bytes ().to_vec ()).unwrap ()
 }
 
-pub unsafe fn str_to_const_c (value : &str) -> *const c_char {
+pub fn str_to_const_c (value : &str) -> *const c_char {
     let new_string = value.clone();
     CString::new (new_string).unwrap ().as_ptr ()
 }
@@ -19,4 +20,11 @@ pub unsafe fn mut_c_to_str (ptr : *mut c_char) -> String {
     }
 
     String::from_utf8 (result).unwrap ()
+}
+
+pub fn option_str_to_const_c (wrapper : Option<&str>) -> *const c_char {
+    match wrapper {
+        None => null (),
+        Some (value) => str_to_const_c (value),
+    }
 }

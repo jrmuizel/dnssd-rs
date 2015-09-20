@@ -56,10 +56,8 @@ pub enum DNSServiceFlags {
     ReturnCNAME        = 0x800,
 }
 
-#[allow(dead_code)]
-pub enum DNSServiceClass {
-    IN = 1,
-}
+pub type DNSServiceClass = uint16_t;
+pub const IN : DNSServiceClass = 1;
 
 #[allow(dead_code)]
 #[repr(C)]
@@ -146,7 +144,7 @@ pub enum DNSServiceErrorType {
 pub const DNS_SERVICE_MAX_SERVICE_NAME : usize = 64;
 
 #[allow(dead_code)]
-pub const DNS_SERVICE_MAX_DOMAIN_NAME : usize = 1005;
+pub const DNS_SERVICE_MAX_DOMAIN_NAME : u64 = 1005;
 
 #[allow(dead_code)]
 pub const DNS_SERVICE_INTERFACE_INDEX_ANY : usize = 0;
@@ -250,7 +248,7 @@ extern {
                                    ttl       : uint32_t) -> DNSServiceErrorType;
 
     pub fn DNSServiceRemoveRecord (sdRef     : DNSServiceRef,
-                                   RecordRef : *mut DNSRecordRef,
+                                   RecordRef : DNSRecordRef,
                                    flags     : DNSServiceFlags) -> DNSServiceErrorType;
 
     pub fn DNSServiceBrowse (sdRef          : *mut DNSServiceRef,
