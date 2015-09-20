@@ -5,7 +5,6 @@ extern crate libc;
 
 pub mod ffi;
 mod utils;
-pub mod dnsrecord;
 pub mod service;
 pub mod callback;
 pub mod txtrecord;

@@ -1,6 +1,7 @@
+use ffi::DNSServiceErrorType;
 use std::ffi::{CStr, CString};
 use std::ptr::null;
-use libc::c_char;
+use libc::{c_char, c_uchar, c_void};
 
 pub unsafe fn const_c_to_string (ptr : *const c_char) -> String {
     String::from_utf8 (CStr::from_ptr (ptr).to_bytes ().to_vec ()).unwrap ()
@@ -11,7 +12,7 @@ pub fn str_to_const_c (value : &str) -> *const c_char {
     CString::new (new_string).unwrap ().as_ptr ()
 }
 
-pub unsafe fn mut_c_to_str (ptr : *mut c_char) -> String {
+pub unsafe fn mut_c_to_string (ptr : *mut c_char) -> String {
     let mut result = Vec::<u8>::new();
 
     let i = 0;
@@ -27,4 +28,22 @@ pub fn option_str_to_const_c (wrapper : Option<&str>) -> *const c_char {
         None => null (),
         Some (value) => str_to_const_c (value),
     }
+}
+
+pub fn if_no_error <T> (value : T, result : DNSServiceErrorType) -> Result<T, DNSServiceErrorType> {
+    match result {
+        DNSServiceErrorType::NoError => Ok(value),
+        error @ _ => Err (error),
+    }
+}
+
+pub unsafe fn const_c_void_to_vec (data : *const c_void, len : usize) -> Vec<u8> {
+    let mut result = Vec::<u8>::new ();
+    let data = data as *const c_uchar;
+
+    for i in 0..len {
+        result.push (*data.offset (i as isize))
+    }
+
+    result
 }

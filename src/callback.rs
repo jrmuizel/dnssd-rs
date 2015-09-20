@@ -1,9 +1,8 @@
-use utils::const_c_to_string;
-use dnsrecord::DNSRecord;
+use utils::{const_c_to_string, const_c_void_to_vec};
 use txtrecord::TXTRecordData;
-use service::DNSService;
-use ffi::{DNSServiceRef, DNSServiceFlags, DNSServiceErrorType, DNSRecordRef};
-use libc::{c_void, c_char, uint32_t, c_uchar};
+use service::{DNSService, DNSRecord};
+use ffi::{DNSServiceRef, DNSServiceFlags, DNSServiceErrorType, DNSRecordRef, DNSServiceType, DNSServiceClass};
+use libc::{c_void, c_char, uint16_t, uint32_t, c_uchar};
 
 pub type SafeDomainEnumReplyCallback = Box<Fn(DNSService,
                                               DNSServiceFlags,
@@ -40,12 +39,15 @@ pub type SafeRegisterRecordReplyCallback = Box<Fn(DNSService,
                                                   DNSServiceFlags,
                                                   DNSServiceErrorType) + 'static>;
 
-/*pub type SafeQueryRecordReplyCallback = Box<Fn(DNSService,
+pub type SafeQueryRecordReplyCallback = Box<Fn(DNSService,
                                                DNSServiceFlags,
                                                u32,
                                                DNSServiceErrorType,
                                                &str,
-                                               ) + 'static>*/
+                                               DNSServiceType,
+                                               DNSServiceClass,
+                                               Vec<u8>,
+                                               u32) + 'static>;
 
 pub struct SafeDomainEnumReply <T> {
     pub callback : SafeDomainEnumReplyCallback,
@@ -70,6 +72,11 @@ pub struct SafeResolveReply <T> {
 pub struct SafeRegisterRecordReply <T> {
     pub callback : SafeRegisterRecordReplyCallback,
     pub content  : T,
+}
+
+pub struct SafeQueryRecordReply <T> {
+    pub callback : SafeQueryRecordReplyCallback,
+    pub content   : T,
 }
 
 impl <T> SafeDomainEnumReply <T> {
@@ -151,12 +158,12 @@ impl <T> SafeBrowseReply <T> {
 impl <T> SafeResolveReply <T> {
     pub extern fn wrapper (service_ref     : DNSServiceRef,
                            flags           : DNSServiceFlags,
-                           interface_index : u32,
+                           interface_index : uint32_t,
                            error_code      : DNSServiceErrorType,
                            fullname        : *const c_char,
                            hosttarget      : *const c_char,
-                           port            : u16,
-                           txt_len         : u16,
+                           port            : uint16_t,
+                           txt_len         : uint16_t,
                            txt_record      : *const c_uchar,
                            context         : *mut c_void) {
         let context = context as *mut Option<SafeResolveReply<T>>;
@@ -191,6 +198,34 @@ impl <T> SafeRegisterRecordReply <T> {
                     let safe_service = DNSService { ptr: service_ref };
                     let safe_record = DNSRecord { ptr: record_ref };
                     (callback_struct.callback) (safe_service, safe_record, flags, error_code);
+                }
+            }
+        }
+    }
+}
+
+impl <T> SafeQueryRecordReply <T> {
+    pub extern fn wrapper (service_ref     : DNSServiceRef,
+                           flags           : DNSServiceFlags,
+                           interface_index : uint32_t,
+                           error_code      : DNSServiceErrorType,
+                           fullname        : *const c_char,
+                           rrtype          : DNSServiceType,
+                           rrclass         : uint16_t,
+                           rdlen           : uint16_t,
+                           rdata           : *const c_void,
+                           ttl             : uint32_t,
+                           context         : *mut c_void) {
+        let context = context as *mut Option<SafeQueryRecordReply<T>>;
+        unsafe {
+            match *context {
+                None => {},
+                Some (ref callback_struct) => {
+                    let safe_service = DNSService { ptr: service_ref };
+                    let safe_fullname = const_c_to_string (fullname);
+                    let safe_data = const_c_void_to_vec (rdata, rdlen as usize);
+                    (callback_struct.callback) (safe_service, flags, interface_index, error_code,
+                        &safe_fullname, rrtype, rrclass, safe_data, ttl);
                 }
             }
         }

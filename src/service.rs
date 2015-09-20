@@ -1,8 +1,8 @@
 use ffi::*;
 use txtrecord::TXTRecord;
-use utils::{option_str_to_const_c, str_to_const_c};
-use dnsrecord::DNSRecord;
-use callback::{SafeDomainEnumReply, SafeRegisterReply, SafeBrowseReply, SafeResolveReply};
+use utils::{option_str_to_const_c, str_to_const_c, if_no_error};
+use callback::{SafeDomainEnumReply, SafeRegisterReply, SafeBrowseReply, SafeResolveReply,
+    SafeRegisterRecordReply, SafeQueryRecordReply};
 use std::option::Option;
 use std::ops::Drop;
 use std::mem::uninitialized;
@@ -43,10 +43,8 @@ impl DNSService {
         unsafe {
             let result = DNSServiceEnumerateDomains (&mut service.ptr, flags, interface_index,
             Some (SafeDomainEnumReply::<T>::wrapper), context);
-            match result {
-                DNSServiceErrorType::NoError => Ok (service),
-                error @ _ => Err (error),
-            }
+
+            if_no_error (service, result)
         }
     }
 
@@ -72,44 +70,8 @@ impl DNSService {
                 unsafe_regtype, unsafe_domain, unsafe_host, port, txt_record.get_length (),
                 &txt_record as *const _ as *const c_void, Some(SafeRegisterReply::<T>::wrapper), context);
 
-            match result {
-                DNSServiceErrorType::NoError => Ok (service),
-                error @ _ => Err (error),
-            }
+            if_no_error (service, result)
         }
-    }
-
-    pub fn add_record <T> (&self,
-                           record       : &mut DNSRecord,
-                           flags        : DNSServiceFlags,
-                           service_type : DNSServiceType,
-                           data         : T,
-                           ttl          : u32) -> DNSServiceErrorType
-                           where T : Into<Vec<u8>> {
-        unsafe {
-            let bytes = &data.into ();
-            DNSServiceAddRecord (self.ptr, &mut record.ptr, flags, service_type as uint16_t,
-            bytes.len () as u16, bytes as *const _ as*const c_void, ttl)
-        }
-    }
-
-    pub fn update_record <T> (&self,
-                              record : &DNSRecord,
-                              flags  : DNSServiceFlags,
-                              data   : T,
-                              ttl    : u32) -> DNSServiceErrorType
-                              where T : Into<Vec<u8>> {
-        unsafe {
-            let bytes = &data.into ();
-            DNSServiceUpdateRecord (self.ptr, record.ptr, flags, bytes.len () as uint16_t,
-            bytes as *const _ as *const c_void, ttl)
-        }
-    }
-
-    pub fn remove_record <T> (&self,
-                              record : &DNSRecord,
-                              flags  : DNSServiceFlags) -> DNSServiceErrorType {
-        unsafe { DNSServiceRemoveRecord (self.ptr, record.ptr, flags) }
     }
 
     pub fn browse <T> (flags           : DNSServiceFlags,
@@ -126,10 +88,7 @@ impl DNSService {
             let result = DNSServiceBrowse (&mut service.ptr, flags, interface_index, unsafe_regtype,
                 unsafe_domain, Some(SafeBrowseReply::<T>::wrapper), context);
 
-            match result {
-                DNSServiceErrorType::NoError => Ok(service),
-                error @ _ => Err (error),
-            }
+            if_no_error (service, result)
         }
     }
 
@@ -149,10 +108,7 @@ impl DNSService {
             let result = DNSServiceResolve (&mut service.ptr, flags, interface_index, unsafe_name,
                 unsafe_regtype, unsafe_domain, Some(SafeResolveReply::<T>::wrapper), context);
 
-            match result {
-                DNSServiceErrorType::NoError => Ok(service),
-                error @ _ => Err (error),
-            }
+            if_no_error (service, result)
         }
     }
 
@@ -160,26 +116,119 @@ impl DNSService {
         unsafe  {
             let mut service = DNSService::new ();
             let result = DNSServiceCreateConnection (&mut service.ptr);
-            match result {
-                DNSServiceErrorType::NoError => Ok(service),
-                error @ _ => Err (error),
-            }
+
+            if_no_error (service, result)
         }
     }
 
-    /*pub fn register_record (&self,
-                            record_ref      : DNSRecord,
-                            flags           : DNSServiceFlags,
-                            interface_index : u32,
-                            fullname        : &str,
-                            rrtype          : DNSServiceType,
-                            rrclass         : DNSServiceClass,
-                            rdlen           : u16,
-                            rdata           : )*/
+    pub fn add_record <T> (&self,
+                           flags        : DNSServiceFlags,
+                           service_type : DNSServiceType,
+                           data         : T,
+                           ttl          : u32)
+                           -> Result<DNSRecord ,DNSServiceErrorType>
+                           where T : Into<Vec<u8>> {
+        unsafe {
+            let mut record = DNSRecord::new();
+            let bytes = &data.into ();
+            let result = DNSServiceAddRecord (self.ptr, &mut record.ptr, flags, service_type,
+            bytes.len () as u16, bytes.as_ptr () as *const c_void, ttl);
+
+            if_no_error (record, result)
+        }
+    }
+
+    pub fn update_record <T> (&self,
+                              record : &DNSRecord,
+                              flags  : DNSServiceFlags,
+                              data   : T,
+                              ttl    : u32) -> DNSServiceErrorType
+                              where T : Into<Vec<u8>> {
+        unsafe {
+            let bytes = &data.into ();
+            DNSServiceUpdateRecord (self.ptr, record.ptr, flags, bytes.len () as uint16_t,
+            bytes.as_ptr () as *const c_void, ttl)
+        }
+    }
+
+    pub fn remove_record <T> (&self,
+                              record : &DNSRecord,
+                              flags  : DNSServiceFlags) -> DNSServiceErrorType {
+        unsafe { DNSServiceRemoveRecord (self.ptr, record.ptr, flags) }
+    }
+
+    pub fn register_record <S, T> (&self,
+                                   flags           : DNSServiceFlags,
+                                   interface_index : u32,
+                                   fullname        : &str,
+                                   rrtype          : DNSServiceType,
+                                   rrclass         : DNSServiceClass,
+                                   data           : T,
+                                   ttl             : u32,
+                                   callback_struct : Option<SafeRegisterRecordReply<S>>)
+                                   -> Result<DNSRecord, DNSServiceErrorType>
+                                   where T: Into<Vec<u8>> {
+        let mut record = DNSRecord::new ();
+        let context = &callback_struct as *const _ as *mut c_void;
+        let unsafe_fullname = str_to_const_c (fullname);
+        let bytes = &data.into ();
+        unsafe {
+            let result = DNSServiceRegisterRecord (self.ptr, &mut record.ptr, flags, interface_index,
+                unsafe_fullname, rrtype, rrclass, bytes.len () as u16, bytes.as_ptr () as *const c_void,
+                ttl, Some(SafeRegisterRecordReply::<T>::wrapper), context);
+
+            if_no_error (record, result)
+        }
+    }
+
+    pub fn query_record <T> (flags           : DNSServiceFlags,
+                             interface_index : u32,
+                             fullname        : &str,
+                             rrtype          : DNSServiceType,
+                             rrclass         : DNSServiceClass,
+                             callback_struct : Option<SafeQueryRecordReply<T>>)
+                             -> Result<DNSService, DNSServiceErrorType> {
+        let mut service = DNSService::new ();
+        let context = &callback_struct as *const _ as *mut c_void;
+        let unsafe_fullname = str_to_const_c (fullname);
+        unsafe {
+            let result = DNSServiceQueryRecord (&mut service.ptr, flags, interface_index, unsafe_fullname,
+                rrtype, rrclass, Some(SafeQueryRecordReply::<T>::wrapper), context);
+
+            if_no_error (service, result)
+        }
+    }
+
+    pub fn reconfirm_record <T> (flags           : DNSServiceFlags,
+                                 interface_index : u32,
+                                 fullname        : &str,
+                                 rrtype          : DNSServiceType,
+                                 rrclass         : DNSServiceClass,
+                                 data            : T) -> DNSServiceErrorType
+                                 where T : Into<Vec<u8>> {
+        let unsafe_fullname = str_to_const_c (fullname);
+        let bytes = &data.into ();
+        unsafe {
+            DNSServiceReconfirmRecord (flags, interface_index, unsafe_fullname, rrtype, rrclass,
+                bytes.len () as u16, bytes.as_ptr () as *const c_void)
+        }
+    }
 }
 
 impl Drop for DNSService {
     fn drop (&mut self) {
         unsafe { DNSServiceRefDeallocate(self.ptr) };
+    }
+}
+
+pub struct DNSRecord {
+    pub ptr : DNSRecordRef,
+}
+
+impl DNSRecord {
+    pub fn new () -> DNSRecord {
+        DNSRecord {
+            ptr : unsafe { uninitialized () },
+        }
     }
 }

@@ -6,7 +6,7 @@ use libc::{uint8_t, c_void, c_char, malloc, free};
 use std::cmp::min;
 use std::ops::Drop;
 use std::ptr::{null, null_mut};
-use utils::{str_to_const_c, mut_c_to_str};
+use utils::{str_to_const_c, mut_c_to_string};
 
 pub struct TXTRecord {
     pub ptr    : TXTRecordRef,
@@ -135,7 +135,7 @@ impl TXTRecordData {
             match TXTRecordGetItemAtIndex (self.len, self.ptr, index, 256, keybuffer, value_len, value_ptr) {
                 DNSServiceErrorType::NoError => {
                     let value = & *(*(value_ptr) as *const T);
-                    let keyvalue = mut_c_to_str (keybuffer);
+                    let keyvalue = mut_c_to_string (keybuffer);
                     free (keybuffer as *mut c_void);
 
                     Ok(TXTRecordItem {
