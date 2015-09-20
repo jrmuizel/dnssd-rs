@@ -2,6 +2,11 @@
 name = "dnssd"
 version = "0.1.0"
 authors = ["Sebastian Garrido <sebasgarcep@gmail.com>"]
+description = "A safe wrapper for the DNS service discovery library."
+repository = "https://github.com/sebasgarcep/dnssd-rs"
+readme = "README.md"
+license = "MIT"
+license-file = "LICENSE"
 
 [dependencies]
 libc = "0.1.10"
