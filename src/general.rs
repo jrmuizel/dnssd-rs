@@ -11,7 +11,7 @@ pub fn dns_service_construct_fullname (service : &str,
         let unsafe_regtype = str_to_const_c (regtype);
         let unsafe_domain = str_to_const_c (domain);
 
-        match DNSServiceConstructFullName (buffer, unsafe_service, unsafe_regtype, unsafe_domain) {
+        match DNSServiceConstructFullName (buffer, unsafe_service.as_ptr(), unsafe_regtype.as_ptr(), unsafe_domain.as_ptr()) {
             0 => {
                 let fullname = mut_c_to_string (buffer);
                 free (buffer as *mut c_void);

@@ -7,9 +7,9 @@ pub unsafe fn const_c_to_string (ptr : *const c_char) -> String {
     String::from_utf8 (CStr::from_ptr (ptr).to_bytes ().to_vec ()).unwrap ()
 }
 
-pub fn str_to_const_c (value : &str) -> *const c_char {
+pub fn str_to_const_c (value : &str) -> CString {
     let new_string = value.clone();
-    CString::new (new_string).unwrap ().as_ptr ()
+    CString::new (new_string).unwrap ()
 }
 
 pub unsafe fn mut_c_to_string (ptr : *mut c_char) -> String {
@@ -23,10 +23,17 @@ pub unsafe fn mut_c_to_string (ptr : *mut c_char) -> String {
     String::from_utf8 (result).unwrap ()
 }
 
-pub fn option_str_to_const_c (wrapper : Option<&str>) -> *const c_char {
+pub fn option_str_to_const_c (wrapper : Option<&str>) -> Option<CString> {
     match wrapper {
-        None => null (),
-        Some (value) => str_to_const_c (value),
+        None => None,
+        Some (value) => Some(str_to_const_c (value)),
+    }
+}
+
+pub fn option_cstr_to_const_c(wrapper : &Option<CString>) -> *const c_char {
+    match wrapper {
+        &None => null(),
+        &Some(ref value) => value.as_ref().as_ptr()
     }
 }
 

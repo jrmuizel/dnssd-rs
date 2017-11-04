@@ -1,6 +1,6 @@
 use ffi::*;
 use txtrecord::TXTRecord;
-use utils::{option_str_to_const_c, str_to_const_c, if_no_error};
+use utils::{option_str_to_const_c, option_cstr_to_const_c, str_to_const_c, if_no_error};
 use callback::{SafeDomainEnumReply, SafeRegisterReply, SafeBrowseReply, SafeResolveReply,
     SafeRegisterRecordReply, SafeQueryRecordReply};
 use std::option::Option;
@@ -66,8 +66,15 @@ impl DNSService {
             let unsafe_host = option_str_to_const_c (host);
             let context = &callback_struct as *const _ as *mut c_void;
 
-            let result = DNSServiceRegister (&mut service.ptr, flags, interface_index, unsafe_name,
-                unsafe_regtype, unsafe_domain, unsafe_host, port, txt_record.get_length (),
+            let result = DNSServiceRegister (&mut service.ptr,
+                                             flags,
+                                             interface_index,
+                                             option_cstr_to_const_c(&unsafe_name),
+                                             unsafe_regtype.as_ptr(),
+                                             option_cstr_to_const_c(&unsafe_domain),
+                                             option_cstr_to_const_c(&unsafe_host),
+                                             port,
+                                             txt_record.get_length (),
                 &txt_record as *const _ as *const c_void, Some(SafeRegisterReply::<T>::wrapper), context);
 
             if_no_error (service, result)
@@ -85,8 +92,8 @@ impl DNSService {
             let unsafe_regtype = str_to_const_c (regtype);
             let unsafe_domain = str_to_const_c (domain);
             let context = &callback_struct as *const _ as *mut c_void;
-            let result = DNSServiceBrowse (&mut service.ptr, flags, interface_index, unsafe_regtype,
-                unsafe_domain, Some(SafeBrowseReply::<T>::wrapper), context);
+            let result = DNSServiceBrowse (&mut service.ptr, flags, interface_index, unsafe_regtype.as_ptr(),
+                unsafe_domain.as_ptr(), Some(SafeBrowseReply::<T>::wrapper), context);
 
             if_no_error (service, result)
         }
@@ -105,8 +112,8 @@ impl DNSService {
             let unsafe_regtype = str_to_const_c (regtype);
             let unsafe_domain = str_to_const_c (domain);
             let context = &callback_struct as *const _ as *mut c_void;
-            let result = DNSServiceResolve (&mut service.ptr, flags, interface_index, unsafe_name,
-                unsafe_regtype, unsafe_domain, Some(SafeResolveReply::<T>::wrapper), context);
+            let result = DNSServiceResolve (&mut service.ptr, flags, interface_index, unsafe_name.as_ptr(),
+                unsafe_regtype.as_ptr(), unsafe_domain.as_ptr(), Some(SafeResolveReply::<T>::wrapper), context);
 
             if_no_error (service, result)
         }
@@ -174,7 +181,7 @@ impl DNSService {
         let bytes = &data.into ();
         unsafe {
             let result = DNSServiceRegisterRecord (self.ptr, &mut record.ptr, flags, interface_index,
-                unsafe_fullname, rrtype, rrclass, bytes.len () as u16, bytes.as_ptr () as *const c_void,
+                unsafe_fullname.as_ptr(), rrtype, rrclass, bytes.len () as u16, bytes.as_ptr () as *const c_void,
                 ttl, Some(SafeRegisterRecordReply::<T>::wrapper), context);
 
             if_no_error (record, result)
@@ -192,7 +199,7 @@ impl DNSService {
         let context = &callback_struct as *const _ as *mut c_void;
         let unsafe_fullname = str_to_const_c (fullname);
         unsafe {
-            let result = DNSServiceQueryRecord (&mut service.ptr, flags, interface_index, unsafe_fullname,
+            let result = DNSServiceQueryRecord (&mut service.ptr, flags, interface_index, unsafe_fullname.as_ptr(),
                 rrtype, rrclass, Some(SafeQueryRecordReply::<T>::wrapper), context);
 
             if_no_error (service, result)
@@ -209,7 +216,7 @@ impl DNSService {
         let unsafe_fullname = str_to_const_c (fullname);
         let bytes = &data.into ();
         unsafe {
-            DNSServiceReconfirmRecord (flags, interface_index, unsafe_fullname, rrtype, rrclass,
+            DNSServiceReconfirmRecord (flags, interface_index, unsafe_fullname.as_ptr(), rrtype, rrclass,
                 bytes.len () as u16, bytes.as_ptr () as *const c_void)
         }
     }

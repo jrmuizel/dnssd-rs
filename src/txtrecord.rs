@@ -54,10 +54,10 @@ impl TXTRecord {
         unsafe {
             let new_key = str_to_const_c (key);
             match value_wrapper {
-                None => TXTRecordSetValue (&mut self.ptr, new_key, 0, null ()),
+                None => TXTRecordSetValue (&mut self.ptr, new_key.as_ptr(), 0, null ()),
                 Some (value) => {
                     let value_array = value.into ();
-                    TXTRecordSetValue (&mut self.ptr, new_key, value_array.len () as u8, value_array.as_ptr () as *const c_void)
+                    TXTRecordSetValue (&mut self.ptr, new_key.as_ptr(), value_array.len () as u8, value_array.as_ptr () as *const c_void)
                 },
             }
         }
@@ -65,7 +65,7 @@ impl TXTRecord {
 
     pub fn remove_value (&mut self,
                          key : &str) -> DNSServiceErrorType {
-        unsafe { TXTRecordRemoveValue (&mut self.ptr, str_to_const_c (key)) }
+        unsafe { TXTRecordRemoveValue (&mut self.ptr, str_to_const_c (key).as_ptr()) }
     }
 
     pub fn get_length (&self) -> u16 {
@@ -87,7 +87,7 @@ impl TXTRecord {
 impl TXTRecordData {
     pub fn contains_key (&self,
                          key : &str) -> bool {
-        let result = unsafe { TXTRecordContainsKey (self.len, self.ptr, str_to_const_c (key)) };
+        let result = unsafe { TXTRecordContainsKey (self.len, self.ptr, str_to_const_c (key).as_ptr()) };
         match result {
             1 => true,
             _ => false,
@@ -98,7 +98,7 @@ impl TXTRecordData {
                                   key : &'a str) ->  Option<TXTRecordItem<T>> {
         unsafe {
             let value_len : *mut uint8_t = uninitialized ();
-            let value = TXTRecordGetValuePtr (self.len, self.ptr, str_to_const_c (key), value_len);
+            let value = TXTRecordGetValuePtr (self.len, self.ptr, str_to_const_c (key).as_ptr(), value_len);
 
             if value == null () {
                 None
