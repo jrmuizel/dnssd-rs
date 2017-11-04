@@ -197,7 +197,8 @@ pub type DNSServiceQueryRecordReply = Option<extern fn (DNSServiceRef,
                                                         uint32_t,
                                                         *mut c_void)>;
 
-#[link(name = "dns_sd")]
+#[cfg_attr(target_os = "macos", link(name = "Foundation", kind = "framework"))]
+#[cfg_attr(not(target_os = "macos"), link(name = "dns_sd"))]
 extern {
     pub fn DNSServiceRefSockFD (sdRef : DNSServiceRef) -> int32_t;
 
